@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:all": "node scripts/dev.mjs",
     "build": "vite build && node scripts/build-worker.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "api": "wrangler dev --config worker/wrangler.jsonc",
+    "api": "node scripts/dev.mjs api",
     "icons": "node scripts/make-icons.mjs"
   },
   "dependencies": {

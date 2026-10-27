@@ -90,7 +90,7 @@ export default function Onboarding() {
   const plan = useMemo(() => goalPlan(draft), [draft])
   const macros = useMemo(() => macroTargets(draft, plan.target), [draft, plan.target])
   const valid = {
-    0: Number.isFinite(ageNum) && ageNum >= 13 && ageNum <= 100,
+    0: Number.isFinite(ageNum) && ageNum >= 13,
     1:
       Number.isFinite(weightNum) &&
       weightNum > 0 &&
@@ -175,11 +175,11 @@ export default function Onboarding() {
               onChange={(v) => setSex(v as Sex)}
             />
           </Field>
-          <NumberField label="Age" value={age} onChange={setAge} unit="years" min={13} max={100} />
+          <NumberField label="Age" value={age} onChange={setAge} unit="years" min={13} />
           {age.trim() === '' ? (
             <FieldError msg="Please enter your age." />
           ) : !valid[0] ? (
-            <FieldError msg="Age must be between 13 and 100 years." />
+            <FieldError msg="Age must be 13+." />
           ) : null}
         </div>
       )}

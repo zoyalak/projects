@@ -57,9 +57,22 @@ const EXTRA_PROPS = {
 
 const EXTRA_KEYS = ['fiber', 'sugar', 'saturatedFat', 'sodium', 'potassium', 'calcium', 'iron']
 
+// The extended macros as a nested `extras` object — what the parsers read
+// back off each item / label.
+const EXTRA_OBJECT = {
+  type: 'OBJECT',
+  properties: EXTRA_PROPS,
+  required: [...EXTRA_KEYS],
+  propertyOrdering: [...EXTRA_KEYS],
+}
+
 const readExtras = (v: unknown): Record<string, number> => {
   const o = (v ?? {}) as Record<string, unknown>
-  return Object.fromEntries(EXTRA_KEYS.map((k) => [k, num(o[k])]))
+  // Accept either shape: a nested `{ extras: { … } }` object, or the seven
+  // fields sitting flat on the parent. Models return both depending on how
+  // they read the schema, and ignoring one silently zeroed every value.
+  const nested = (o.extras ?? {}) as Record<string, unknown>
+  return Object.fromEntries(EXTRA_KEYS.map((k) => [k, num(nested[k] ?? o[k])]))
 }
 
 const MEAL_SCHEMA = {
@@ -78,9 +91,9 @@ const MEAL_SCHEMA = {
           quantityText: { type: 'STRING' },
           grams: { type: 'NUMBER', nullable: true },
           ...MACRO_PROPS,
-          ...EXTRA_PROPS,
+          extras: EXTRA_OBJECT,
         },
-        required: ['name', 'kcal', 'protein', 'carbs', 'fat'],
+        required: ['name', 'kcal', 'protein', 'carbs', 'fat', 'extras'],
         propertyOrdering: [
           'name',
           'quantityText',
@@ -107,10 +120,10 @@ const LABEL_SCHEMA = {
     servingLabel: { type: 'STRING' },
     gramsPerServing: { type: 'NUMBER', nullable: true },
     ...MACRO_PROPS,
-    ...EXTRA_PROPS,
+    extras: EXTRA_OBJECT,
     notes: { type: 'STRING' },
   },
-  required: ['name', 'per', 'kcal', 'protein', 'carbs', 'fat', 'notes'],
+  required: ['name', 'per', 'kcal', 'protein', 'carbs', 'fat', 'extras', 'notes'],
   propertyOrdering: [
     'name',
     'brand',
@@ -532,7 +545,7 @@ async function handleMeal(request: Request, env: Env): Promise<Response> {
           protein: num(item.protein),
           carbs: num(item.carbs),
           fat: num(item.fat),
-          extras: readExtras(item.extras),
+          extras: readExtras(item),
         }
       })
     : []
@@ -579,7 +592,7 @@ async function handleLabel(request: Request, env: Env): Promise<Response> {
     protein: num(o.protein),
     carbs: num(o.carbs),
     fat: num(o.fat),
-    extras: readExtras(o.extras),
+    extras: readExtras(o),
     notes: str(o.notes),
     model,
   })
